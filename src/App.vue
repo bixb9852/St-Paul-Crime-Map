@@ -1,4 +1,5 @@
 <script>
+//npm run dev -- --port 8000
 import $ from 'jquery'
 
 export default {
@@ -55,6 +56,17 @@ export default {
             this.view = 'about';
         },
 
+        updateLocation(event, location) {
+            let el = document.getElementById('location');
+            el.value = location;
+            el.dispatchEvent(new Event('input'));
+        },
+
+        onMapClick(e) {
+            alert("You clicked the map at " + e.latlng)
+            this.updateLocation(null, e.latlng);
+        },
+
         getJSON(url) {
             return new Promise((resolve, reject) => {
                 $.ajax({
@@ -96,7 +108,7 @@ export default {
             maxZoom: 18
         }).addTo(this.leaflet.map);
         this.leaflet.map.setMaxBounds([[44.883658, -93.217977], [45.008206, -92.993787]]);
-
+        this.leaflet.map.on('click', this.onMapClick);
         let district_boundary = new L.geoJson();
         district_boundary.addTo(this.leaflet.map);
 
@@ -113,6 +125,13 @@ export default {
 </script>
 
 <template>
+    <div class="grid-container">
+        <div class="grid-x grid-padding-x">
+            <label for="location">Enter a location here:</label>
+            <input class="cell small-4" id="location" v-model="location" placeholder="(Lattitude, Longitude) or Address" />
+            <button id="updateLocation" class="cell small-4" type="submit" @click="updateLocation">Go</button>
+        </div>
+    </div>
     <div class="grid-container">
         <div class="grid-x grid-padding-x">
             <p :class="'cell small-4 ' + ((view === 'map') ? 'selected' : 'unselected')" @click="viewMap">Map</p>
