@@ -18,27 +18,27 @@ export default {
                 },
                 zoom: 12,
                 bounds: {
-                    nw: {lat: 45.008206, lng: -93.217977},
-                    se: {lat: 44.883658, lng: -92.993787}
+                    nw: { lat: 45.008206, lng: -93.217977 },
+                    se: { lat: 44.883658, lng: -92.993787 }
                 },
                 neighborhood_markers: [
-                    {location: [44.942068, -93.020521], marker: null},
-                    {location: [44.977413, -93.025156], marker: null},
-                    {location: [44.931244, -93.079578], marker: null},
-                    {location: [44.956192, -93.060189], marker: null},
-                    {location: [44.978883, -93.068163], marker: null},
-                    {location: [44.975766, -93.113887], marker: null},
-                    {location: [44.959639, -93.121271], marker: null},
-                    {location: [44.947700, -93.128505], marker: null},
-                    {location: [44.930276, -93.119911], marker: null},
-                    {location: [44.982752, -93.147910], marker: null},
-                    {location: [44.963631, -93.167548], marker: null},
-                    {location: [44.973971, -93.197965], marker: null},
-                    {location: [44.949043, -93.178261], marker: null},
-                    {location: [44.934848, -93.176736], marker: null},
-                    {location: [44.913106, -93.170779], marker: null},
-                    {location: [44.937705, -93.136997], marker: null},
-                    {location: [44.949203, -93.093739], marker: null}
+                    { location: [44.942068, -93.020521], marker: null },
+                    { location: [44.977413, -93.025156], marker: null },
+                    { location: [44.931244, -93.079578], marker: null },
+                    { location: [44.956192, -93.060189], marker: null },
+                    { location: [44.978883, -93.068163], marker: null },
+                    { location: [44.975766, -93.113887], marker: null },
+                    { location: [44.959639, -93.121271], marker: null },
+                    { location: [44.947700, -93.128505], marker: null },
+                    { location: [44.930276, -93.119911], marker: null },
+                    { location: [44.982752, -93.147910], marker: null },
+                    { location: [44.963631, -93.167548], marker: null },
+                    { location: [44.973971, -93.197965], marker: null },
+                    { location: [44.949043, -93.178261], marker: null },
+                    { location: [44.934848, -93.176736], marker: null },
+                    { location: [44.913106, -93.170779], marker: null },
+                    { location: [44.937705, -93.136997], marker: null },
+                    { location: [44.949203, -93.093739], marker: null }
                 ]
             }
         };
@@ -56,15 +56,58 @@ export default {
             this.view = 'about';
         },
 
+        goToLocation(event) {
+            let el = document.getElementById('location');
+            if (!el.value) return;
+
+            if (el.value.split(',').length == 2) {
+                this.leaflet.map.flyTo(el.value.split(','), 18);
+            } else {
+                let loc = el.value.split(" ");
+                loc[0].replace('X', '0');
+                loc.push("MN");
+                loc = loc.join(" ");
+                this.getText(`https://nominatim.openstreetmap.org/search?q=${loc}&format=jsonv2`)
+                    .then(res => {
+                        const parsed = JSON.parse(res);
+                        if (parsed.length < 0) return;
+                        const location = parsed[0];
+                        this.leaflet.map.flyTo([location.lat, location.lon], 18);
+                    })
+                    .catch(err => {
+                        console.log(err);
+                    });
+            }
+        },
+
         updateLocation(event, location) {
             let el = document.getElementById('location');
-            el.value = location;
+            location = `${location.lat}, ${location.lng}`;
+            el.value = location ?? el.value;
             el.dispatchEvent(new Event('input'));
         },
 
         onMapClick(e) {
-            alert("You clicked the map at " + e.latlng)
             this.updateLocation(null, e.latlng);
+        },
+
+        onMapMove(e) {
+            this.updateLocation(null, this.leaflet.map.getCenter());
+        },
+
+        getText(url) {
+            return new Promise((resolve, reject) => {
+                $.ajax({
+                    dataType: 'text',
+                    url: url,
+                    success: (response) => {
+                        resolve(response);
+                    },
+                    error: (status, message) => {
+                        reject({ status: status.status, message: status.statusText });
+                    }
+                });
+            })
         },
 
         getJSON(url) {
@@ -76,7 +119,7 @@ export default {
                         resolve(response);
                     },
                     error: (status, message) => {
-                        reject({status: status.status, message: status.statusText});
+                        reject({ status: status.status, message: status.statusText });
                     }
                 });
             });
@@ -94,7 +137,7 @@ export default {
                         resolve(response);
                     },
                     error: (status, message) => {
-                        reject({status: status.status, message: status.statusText});
+                        reject({ status: status.status, message: status.statusText });
                     }
                 });
             });
@@ -107,8 +150,15 @@ export default {
             minZoom: 11,
             maxZoom: 18
         }).addTo(this.leaflet.map);
+
+        for(var i = 0; i < this.leaflet.neighborhood_markers.length; i++) {
+            var location = this.leaflet.neighborhood_markers[i].location;
+            L.marker(location, { title: "Incidents in Neighborhood: This No Work Yet" }).addTo(this.leaflet.map);
+        }
+        
         this.leaflet.map.setMaxBounds([[44.883658, -93.217977], [45.008206, -92.993787]]);
         this.leaflet.map.on('click', this.onMapClick);
+        this.leaflet.map.on('moveend', this.onMapMove);
         let district_boundary = new L.geoJson();
         district_boundary.addTo(this.leaflet.map);
 
@@ -120,6 +170,18 @@ export default {
         }).catch((error) => {
             console.log('Error:', error);
         });
+
+        this.getJSON('http://localhost:8080/neighborhoods').then((result) => {
+            this.neighborhoods = result;
+        }).catch((error) => {
+            console.log(error);
+        });
+
+        this.getJSON('http://localhost:8080/incidents?limit=10').then((result) => {
+            this.incidents = result.reverse();
+        }).catch((error) => {
+            console.log(error);
+        });
     }
 }
 </script>
@@ -128,14 +190,16 @@ export default {
     <div class="grid-container">
         <div class="grid-x grid-padding-x">
             <label for="location">Enter a location here:</label>
-            <input class="cell small-4" id="location" v-model="location" placeholder="(Lattitude, Longitude) or Address" />
-            <button id="updateLocation" class="cell small-4" type="submit" @click="updateLocation">Go</button>
+            <input class="cell small-4" id="location" v-model="location"
+                placeholder="(Lattitude, Longitude) or Address" />
+            <button id="updateLocation" class="cell small-4" type="submit" @click="goToLocation">Go</button>
         </div>
     </div>
     <div class="grid-container">
         <div class="grid-x grid-padding-x">
             <p :class="'cell small-4 ' + ((view === 'map') ? 'selected' : 'unselected')" @click="viewMap">Map</p>
-            <p :class="'cell small-4 ' + ((view === 'new_incident') ? 'selected' : 'unselected')" @click="viewNewIncident">New Incident</p>
+            <p :class="'cell small-4 ' + ((view === 'new_incident') ? 'selected' : 'unselected')"
+                @click="viewNewIncident">New Incident</p>
             <p :class="'cell small-4 ' + ((view === 'about') ? 'selected' : 'unselected')" @click="viewAbout">About</p>
         </div>
     </div>
@@ -144,6 +208,34 @@ export default {
             <div class="grid-x grid-padding-x">
                 <div id="leafletmap" class="cell auto"></div>
             </div>
+        </div>
+        <br/>
+        <div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Case Number</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Incident</th>
+                        <th>Police Grid</th>
+                        <th>Neighborhood</th>
+                        <th>Block</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="incident in incidents">
+                        <td>{{ incident.case_number}}</td>
+                        <td>{{ incident.date}}</td>
+                        <td>{{ incident.time}}</td>
+                        <td>{{ incident.incident}}</td>
+                        <td>{{ incident.police_grid}}</td>
+                        <td>{{ neighborhoods.filter(n => n.ID == incident.neighborhood_number)[0].Name}}</td>
+                        <td>{{ incident.block}}</td>
+                    </tr>
+                </tbody>
+            </table>
+
         </div>
     </div>
     <div v-if="view === 'new_incident'">
@@ -176,6 +268,7 @@ export default {
     text-align: center;
     cursor: pointer;
 }
+
 .unselected {
     background-color: rgb(200, 200, 200);
     color: black;
