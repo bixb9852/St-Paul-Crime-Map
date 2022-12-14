@@ -2,13 +2,24 @@
 //npm run dev -- --port 8000
 import $ from 'jquery'
 
+import About from './About.vue'
+import FilterForm from './FilterForm.vue'
+import NewIncidentForm from './NewIncidentForm.vue'
+
+
 export default {
+    components: {
+        About,
+        FilterForm,
+        NewIncidentForm
+    },
     data() {
         return {
             view: 'map',
             codes: [],
             neighborhoods: [],
             incidents: [],
+            filter: false,
             leaflet: {
                 map: null,
                 center: {
@@ -80,6 +91,10 @@ export default {
             }
         },
 
+        toggleFilter(event) {
+            this.filter = !this.filter;
+        },
+
         updateLocation(event, location) {
             let el = document.getElementById('location');
             location = `${location.lat}, ${location.lng}`;
@@ -93,6 +108,10 @@ export default {
 
         onMapMove(e) {
             this.updateLocation(null, this.leaflet.map.getCenter());
+        },
+
+        updateTable(filter) {
+            console.log(filter);
         },
 
         getText(url) {
@@ -151,11 +170,11 @@ export default {
             maxZoom: 18
         }).addTo(this.leaflet.map);
 
-        for(var i = 0; i < this.leaflet.neighborhood_markers.length; i++) {
+        for (var i = 0; i < this.leaflet.neighborhood_markers.length; i++) {
             var location = this.leaflet.neighborhood_markers[i].location;
             L.marker(location, { title: "Incidents in Neighborhood: This No Work Yet" }).addTo(this.leaflet.map);
         }
-        
+
         this.leaflet.map.setMaxBounds([[44.883658, -93.217977], [45.008206, -92.993787]]);
         this.leaflet.map.on('click', this.onMapClick);
         this.leaflet.map.on('moveend', this.onMapMove);
@@ -177,7 +196,7 @@ export default {
             console.log(error);
         });
 
-        this.getJSON('http://localhost:8080/incidents?limit=10').then((result) => {
+        this.getJSON('http://localhost:8080/incidents?limit=1000').then((result) => {
             this.incidents = result.reverse();
         }).catch((error) => {
             console.log(error);
@@ -209,7 +228,13 @@ export default {
                 <div id="leafletmap" class="cell auto"></div>
             </div>
         </div>
-        <br/>
+        <br />
+        <div>
+            <p id="toggleFilter" :class="'cell ' + ((filter) ? 'selected' : 'unselected')" type="submit" @click="toggleFilter">Filter</p>
+            <div v-show="filter === true">
+                <FilterForm @update-rows="updateTable" />
+            </div>
+        </div>
         <div>
             <table class="table">
                 <thead>
@@ -225,13 +250,13 @@ export default {
                 </thead>
                 <tbody>
                     <tr v-for="incident in incidents">
-                        <td>{{ incident.case_number}}</td>
-                        <td>{{ incident.date}}</td>
-                        <td>{{ incident.time}}</td>
-                        <td>{{ incident.incident}}</td>
-                        <td>{{ incident.police_grid}}</td>
-                        <td>{{ neighborhoods.filter(n => n.ID == incident.neighborhood_number)[0].Name}}</td>
-                        <td>{{ incident.block}}</td>
+                        <td>{{ incident.case_number }}</td>
+                        <td>{{ incident.date }}</td>
+                        <td>{{ incident.time }}</td>
+                        <td>{{ incident.incident }}</td>
+                        <td>{{ incident.police_grid }}</td>
+                        <td>{{ neighborhoods.filter(n => n.ID == incident.neighborhood_number)[0].Name }}</td>
+                        <td>{{ incident.block }}</td>
                     </tr>
                 </tbody>
             </table>
@@ -239,20 +264,11 @@ export default {
         </div>
     </div>
     <div v-if="view === 'new_incident'">
-        <!-- Replace this with your actual form: can be done here or by making a new component -->
-        <div class="grid-container">
-            <div class="grid-x grid-padding-x">
-                <h1 class="cell auto">New Incident Form</h1>
-            </div>
-        </div>
+        <NewIncidentForm />
     </div>
     <div v-if="view === 'about'">
         <!-- Replace this with your actual about the project content: can be done here or by making a new component -->
-        <div class="grid-container">
-            <div class="grid-x grid-padding-x">
-                <h1 class="cell auto">About the Project</h1>
-            </div>
-        </div>
+        <About />
     </div>
 </template>
 
