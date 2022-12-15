@@ -1,5 +1,5 @@
 <script>
-//npm run dev -- --port 8080
+//npm run dev -- --port 8000
 import $ from 'jquery'
 
 import About from './About.vue'
@@ -291,7 +291,7 @@ export default {
                         <td>{{ incident.time }}</td>
                         <td>{{ incident.incident }}</td>
                         <td>{{ incident.police_grid }}</td>
-                        <td>{{ neighborhoods.filter(n => n.ID == incident.neighborhood_number)[0].Name }}</td>
+                        <td>{{ neighborhood_dict.filter(n => n.ID == incident.neighborhood_number)[0].Name }}</td>
                         <td>{{ incident.block }}</td>
                     </tr>
                 </tbody>
