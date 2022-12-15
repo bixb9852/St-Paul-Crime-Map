@@ -10,7 +10,8 @@ export default {
                 startTime: '',
                 endTime: '',
                 startDate: '',
-                endDate: ''
+                endDate: '',
+                limit: 1000,
             },
             incident_names: {
                 'Murder': [100, 110, 120],
@@ -67,6 +68,21 @@ export default {
             } else {
                 comp.filtered.neighborhoods.push(e);
             }
+        },
+        limitChange: (comp) => {
+            comp.filtered.limit = document.getElementById('limitInput').value;
+        },
+        startDateChange: (comp) => {
+            comp.filtered.startDate = document.getElementById('startDateInput').value;
+        },
+        endDateChange: (comp) => {
+            comp.filtered.endDate = document.getElementById('endDateInput').value;
+        },
+        startTimeChange: (comp) => {
+            comp.filtered.startTime = document.getElementById('startTimeInput').value;
+        },
+        endTimeChange: (comp) => {
+            comp.filtered.endTime = document.getElementById('endTimeInput').value;
         }
 
     },
@@ -100,25 +116,25 @@ export default {
                     <div class="cell small-4">
                         <div class="input-group">
                             <span class="input-group-label">Start Date</span>
-                            <input class="input-group-field" type="date" />
+                            <input id="startDateInput" class="input-group-field" type="date" @change="startDateChange(this)" />
                         </div>
                         <div class="input-group">
                             <span class="input-group-label">End Date</span>
-                            <input class="input-group-field" type="date" />
+                            <input id="endDateInput" class="input-group-field" type="date" @change="endDateChange(this)" />
                         </div>
                     </div>
                     <div class="cell small-4">
                         <div class="input-group">
                             <span class="input-group-label">Start Time</span>
-                            <input class="input-group-field" type="time" />
+                            <input id="startTimeInput" class="input-group-field" type="time" @change="startTimeChange(this)" />
                         </div>
                         <div class="input-group">
                             <span class="input-group-label">End Time</span>
-                            <input class="input-group-field" type="time" />
+                            <input id="endTimeInput" class="input-group-field" type="time" @change="endTimeChange(this)" />
                         </div>
                     </div>
                     <div class="cell small-4">
-                        <input type="number" />
+                        <input id="limitInput" min="1" type="number" :value="filtered.limit" @change="limitChange(this)" />
                     </div>
                 </div>
 

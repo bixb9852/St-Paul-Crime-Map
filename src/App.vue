@@ -111,7 +111,40 @@ export default {
         },
 
         updateTable(filter) {
-            console.log(filter);
+            var url = 'http://localhost:8080/incidents?';
+
+            if (filter.incidents.length > 0) {
+                url += 'code=' + filter.incidents.join(',') + '&';
+            }
+
+            if (filter.neighborhoods.length > 0) {
+                url += 'neighborhood=' + filter.neighborhoods.join(',') + '&';
+            }
+
+            if (filter.startDate != '') {
+                url += 'start_date=' + filter.startDate + '&';
+            }
+
+            if (filter.endDate != '') {
+                url += 'end_date=' + filter.endDate + '&';
+            }
+
+            url += 'limit=' + filter.limit;
+
+            this.getJSON(url).then((result) => {
+                if (filter.startTime != '') {
+                    result = result.filter(i => i.time > filter.startTime);
+                }
+
+                if (filter.endTime != '') {
+                    result = result.filter(i => i.time < filter.endTime);
+                }
+
+                this.incidents = result;
+                this.filter = false;
+            }).catch((error) => {
+                console.log(error);
+            });
         },
 
         getText(url) {
@@ -197,7 +230,7 @@ export default {
         });
 
         this.getJSON('http://localhost:8080/incidents?limit=1000').then((result) => {
-            this.incidents = result.reverse();
+            this.incidents = result;
         }).catch((error) => {
             console.log(error);
         });
@@ -230,7 +263,8 @@ export default {
         </div>
         <br />
         <div>
-            <p id="toggleFilter" :class="'cell ' + ((filter) ? 'selected' : 'unselected')" type="submit" @click="toggleFilter">Filter</p>
+            <p id="toggleFilter" :class="'cell ' + ((filter) ? 'selected' : 'unselected')" type="submit"
+                @click="toggleFilter">Filter</p>
             <div v-show="filter === true">
                 <FilterForm @update-rows="updateTable" />
             </div>
