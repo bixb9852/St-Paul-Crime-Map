@@ -104,6 +104,11 @@ export default {
 
         onMapClick(e) {
             this.updateLocation(null, e.latlng);
+            let zoomLevel = this.leaflet.map.getZoom();
+            if (zoomLevel <= 13){
+                zoomLevel = 13
+            }
+            this.leaflet.map.setView(e.latlng,zoomLevel);
         },
 
         onMapMove(e) {
