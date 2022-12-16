@@ -70,10 +70,15 @@ export default {
         goToLocation(event) {
             let el = document.getElementById('location');
             if (!el.value) return;
-
             if (el.value.split(',').length == 2) {
-                this.leaflet.map.flyTo(el.value.split(','), 18);
+                let location = el.value.split(',');
+                console.log(location[1]);
+                //This condition always is false at the moment
+                if((44.883658 <= parseInt(location[0]) <= 45.008206) && ((-93.217977 <= parseInt(location[1])<= -92.993787))){
+                    this.leaflet.map.flyTo(el.value.split(','), 18);
+                }
             } else {
+                console.log("address entered")
                 let loc = el.value.split(" ");
                 loc[0].replace('X', '0');
                 loc.push("MN");
@@ -83,7 +88,12 @@ export default {
                         const parsed = JSON.parse(res);
                         if (parsed.length < 0) return;
                         const location = parsed[0];
-                        this.leaflet.map.flyTo([location.lat, location.lon], 18);
+                        console.log(location);
+                        if ((44.883658 <= location.lat <= 45.008206) && (-93.217977 <= location.lon) && (location.lon <= -92.993787)) {
+                            this.leaflet.map.flyTo([location.lat, location.lon], 18);
+                        } else {
+                            alert("Please enter an address within the St. Paul city boundaries!");
+                        }
                     })
                     .catch(err => {
                         console.log(err);
