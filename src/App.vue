@@ -253,19 +253,14 @@ export default {
                         marker.bindPopup(`Incidents in the ${name} Neighborhood: ${incidentNumber}`);
                         layerGroup.addLayer(marker);
                     }
-                    var overlay = {'markers': layerGroup};
-                    L.control.layers(null, overlay).addTo(this.leaflet.map);
+                    layerGroup.addTo(this.leaflet.map);
                 })
                 .catch((error) => {
                     console.log(error);
                 });  
-                 
             } else {
-
                 for (var i = 0; i < this.leaflet.neighborhood_markers.length; i++) {
-                    //var location = this.leaflet.neighborhood_markers[i].location;
                     var name = this.leaflet.neighborhood_markers[i].marker;
-                    //var marker = L.marker(location, {title:name}).on('click', this.onMapClick);
                     var incidentNumber = 0;
                     for (var j=0;j<this.incidents.length;j++) {
                         if (this.incidents[j].neighborhood_number == i+1) {
@@ -282,10 +277,25 @@ export default {
             }).catch((error) => {
                 console.log(error);
             }); 
+        },
+        getRowColor(incident){
+            let code = incident.code
+            //console.log(code);
+
+            let personal = [100, 110, 120, 210, 220,400, 410, 411, 412, 420, 421, 422, 430, 431, 432, 440, 441, 442, 450, 451, 452, 453,810, 861, 862, 863];
+            let property = [300, 311, 312, 313, 314, 321, 322, 323, 324, 331, 333, 334, 341, 342, 343, 344, 351, 352, 353, 354, 361, 363, 364, 371, 372, 373
+            , 374, 500, 510, 511, 513, 515, 516, 520, 521, 523, 525, 526, 530, 531, 533, 535, 536, 540, 541, 543, 545, 546, 550, 551, 553, 555, 556, 560, 561
+            , 563, 565, 566, 600, 603, 611, 612, 613, 614, 621, 622, 623, 630, 631, 632, 633, 640, 641, 642, 643, 651, 652,653, 661, 662, 663,671, 672, 673
+            , 681, 682, 683, 691,692, 693, 700, 710, 711, 712, 720,721, 722, 730,731, 732, 900, 901, 903, 905, 911, 913, 915, 921, 922, 923, 925, 931, 933, 941
+            , 942, 951, 961, 971, 972, 975, 981, 982, 1400, 1401, 1410, 1415, 1416, 1420, 1425, 1426, 1430, 1435, 1436];
+            if (personal.includes(code)){
+                return 'background:#FB8072';
+            } else if (property.includes(code)){
+                return 'background:#FFFFB3'
+            } else {
+                return "background:#80B1D3";
             }
-
-        
-
+        }
     },
     mounted() {
         this.leaflet.map = L.map('leafletmap').setView([this.leaflet.center.lat, this.leaflet.center.lng], this.leaflet.zoom);
@@ -346,20 +356,14 @@ export default {
                 <FilterForm @update-rows="updateTable" />
             </div>
         </div>
-        <div class="grid-container">
-            <div class="grid-x grid-padding-x">
-                <div class='my-legend'>
-                    <div class='legend-title'>Different Crime Categories</div>
-                    <div class='legend-scale'>
-                        <ul class='legend-labels'>
-                            <li><span style='background:#8DD3C7;'></span>Crimes Against a Person</li>
-                            <li><span style='background:#FFFFB3;'></span>Crimes Against Property</li>
-                            <li><span style='background:#BEBADA;'></span>Inchoate Crimes</li>
-                            <li><span style='background:#FB8072;'></span>Statutory Crimes</li>
-                            <li><span style='background:#80B1D3;'></span>Other Crimes</li>
-                        </ul>
-                    </div>
-                </div>
+        <div class='my-legend'>
+            <div class='legend-title'>Different Crime Categories</div>
+            <div class='legend-scale'>
+                <ul class='legend-labels'>
+                    <li><span style='background:#FB8072;'></span>Violent Crimes</li>
+                    <li><span style='background:#FFFFB3;'></span>Property Crimes</li>
+                    <li><span style='background:#80B1D3;'></span>Other Crimes</li>
+                </ul>
             </div>
         </div>
         <div>
@@ -376,7 +380,7 @@ export default {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="incident in incidents">
+                    <tr class="color-row" v-for="incident in incidents" :style="getRowColor(incident)">
                         <td>{{ incident.case_number }}</td>
                         <td>{{ incident.date }}</td>
                         <td>{{ incident.time }}</td>
@@ -420,6 +424,10 @@ export default {
     cursor: pointer;
 }
 
+.my-legend {
+    padding-left: 5px;
+}
+
 .my-legend .legend-title {
     text-align: left;
     margin-bottom: 5px;
@@ -448,11 +456,6 @@ export default {
     margin-right: 5px;
     margin-left: 0;
     border: 1px solid #999;
-    }
-  .my-legend .legend-source {
-    font-size: 70%;
-    color: #999;
-    clear: both;
     }
   .my-legend a {
     color: #777;
