@@ -175,7 +175,6 @@ export default {
             var corners = this.leaflet.map.getBounds();
             var ne = corners.getNorthEast();
             var sw = corners.getSouthWest();
-            console.log(`NE: ${ne}, SW:${sw}`);
             let inRange = []
             for (var i = 0; i < this.leaflet.neighborhood_markers.length; i++) {
                 if ((parseFloat(sw.lat) <= parseFloat(this.leaflet.neighborhood_markers[i].location[0]) <= parseFloat(ne.lat)) && (parseFloat(sw.lng) <= this.leaflet.neighborhood_markers[i].location[1]) && (this.leaflet.neighborhood_markers[i].location[1] <= parseFloat(ne.lng))) {
@@ -185,31 +184,6 @@ export default {
             console.log(inRange);
             // var marker = L.marker([ne.lat,ne.lng],{icon:greenIcon}).addTo(this.leaflet.map)
             // var marker = L.marker([sw.lat,sw.lng],{icon:greenIcon}).addTo(this.leaflet.map)
-        },
-
-        toggleMarker(incident) {
-            const oldMarker = this.visibleMarkers.filter(d => d.case == incident.case_number)[0];
-            if (oldMarker) {
-                oldMarker.marker.remove(this.leaflet.map);
-                this.visibleMarkers = this.visibleMarkers.filter(d => d != oldMarker);
-            } else {
-                let loc = incident.block.split(" ");
-                loc[0] = loc[0].replaceAll(/X/g, '0');
-                loc.push("MN");
-                loc.push("SAINT PAUL");
-                loc = loc.join("+");
-                this.getText(`https://nominatim.openstreetmap.org/search?q=${loc}&format=jsonv2`).then(result => {
-                    const parsed = JSON.parse(result);
-                    if (parsed.length <= 0) return;
-                    const location = parsed[0];
-                    const marker = L.marker([location.lat, location.lon], { icon: this.leaflet.icons.green });
-                    this.visibleMarkers.push({ case: incident.case_number, marker: marker});
-                    marker.bindPopup(`Date: ${incident.date}\r\n Time: ${incident.time}, Incident: ${incident.incident}, DELETE BUTTON HERE`);
-                    marker.addTo(this.leaflet.map);
-                }).catch((err) => {
-                    console.log(err);
-                })
-            }
         },
 
         getText(url) {
@@ -259,6 +233,7 @@ export default {
                 });
             });
         },
+
         placeMarkers(layerGroup) {
             this.getJSON('http://localhost:8080/neighborhoods').then((result) => {
                 this.neighborhoods = result;
@@ -303,6 +278,7 @@ export default {
                 console.log(error);
             });
         },
+
         getRowColor(incident) {
             let code = incident.code
             let personal = [100, 110, 120, 210, 220, 400, 410, 411, 412, 420, 421, 422, 430, 431, 432, 440, 441, 442, 450, 451, 452, 453, 810, 861, 862, 863];
@@ -319,6 +295,7 @@ export default {
                 return "background:#80B1D3";
             }
         },
+
         deleteIncident(incident) {
             console.log('deleting instance');
             console.log(incident);
@@ -347,8 +324,35 @@ export default {
                     console.log({ status: status.status, message: status.statusText });
                 }
             });
-
-
+        },
+        toggleMarker(incident) {
+            const oldMarker = this.visibleMarkers.filter(d => d.case == incident.case_number)[0];
+            if (oldMarker) {
+                oldMarker.marker.remove(this.leaflet.map);
+                this.visibleMarkers = this.visibleMarkers.filter(d => d != oldMarker);
+            } else {
+                let loc = incident.block.split(" ");
+                loc[0] = loc[0].replaceAll(/X/g, '0');
+                loc.push("MN");
+                loc.push("SAINT PAUL");
+                loc = loc.join("+");
+                this.getText(`https://nominatim.openstreetmap.org/search?q=${loc}&format=jsonv2`).then(result => {
+                    const parsed = JSON.parse(result);
+                    if (parsed.length <= 0) return;
+                    const location = parsed[0];
+                    const marker = L.marker([location.lat, location.lon], { icon: this.leaflet.icons.green });
+                    this.visibleMarkers.push({ case: incident.case_number, marker: marker});
+                    let cont = $('<div />');
+                    cont.html(`Date: ${incident.date}\r\n Time: ${incident.time}, Incident: ${incident.incident}\n <button id="delBut" onclick="${this.leaflet.map.removeLayer(marker)}">Delete</button>`);
+                    marker.bindPopup(cont[0]);
+                    marker.addTo(this.leaflet.map).openPopup();
+                    $('#delBut').on('click', () => {
+                        this.leaflet.map.removeLayer(marker);
+                    });
+                }).catch((err) => {
+                    console.log(err);
+                })
+            }
         }
     },
     mounted() {
@@ -365,7 +369,6 @@ export default {
         this.leaflet.map.on('moveend', this.onMapMove);
         let district_boundary = new L.geoJson();
         district_boundary.addTo(this.leaflet.map);
-
         this.leaflet.icons.green = new L.Icon({
             iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
             shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
@@ -453,7 +456,7 @@ export default {
                         <td>{{ incident.police_grid }}</td>
                         <td>{{ neighborhoods.filter(n => n.ID == incident.neighborhood_number)[0].Name }}</td>
                         <td>{{ incident.block }}</td>
-                        <td><input type="checkbox" @change="toggleMarker(incident)" /></td>
+                        <td><button @click="toggleMarker(incident)">Add Marker</button></td>
                         <td><button @click="deleteIncident(incident)"><svg xmlns="http://www.w3.org/2000/svg" width="16"
                                     height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
                                     <path
