@@ -133,6 +133,7 @@ export default {
             if (filter.removed == true && this.currFilter != null) {
                 url = this.currFilter;
             } else {
+                console.log(filter);
                 var url = 'http://localhost:8080/incidents?';
 
                 if (filter.incidents.length > 0) {
@@ -178,10 +179,20 @@ export default {
             let inRange = []
             for (var i = 0; i < this.leaflet.neighborhood_markers.length; i++) {
                 if ((parseFloat(sw.lat) <= parseFloat(this.leaflet.neighborhood_markers[i].location[0]) <= parseFloat(ne.lat)) && (parseFloat(sw.lng) <= this.leaflet.neighborhood_markers[i].location[1]) && (this.leaflet.neighborhood_markers[i].location[1] <= parseFloat(ne.lng))) {
-                    inRange.push(this.leaflet.neighborhood_markers[i].marker);
+                    inRange.push(i);
                 }
             }
             console.log(inRange);
+            this.updateTable({
+                incidents: [],
+                neighborhoods: inRange,
+                startTime: '',
+                endTime: '',
+                startDate: '',
+                endDate: '',
+                limit: 1000,
+                removed: false
+            })
             // var marker = L.marker([ne.lat,ne.lng],{icon:greenIcon}).addTo(this.leaflet.map)
             // var marker = L.marker([sw.lat,sw.lng],{icon:greenIcon}).addTo(this.leaflet.map)
         },
@@ -297,11 +308,7 @@ export default {
         },
 
         deleteIncident(incident) {
-            console.log('deleting instance');
-            console.log(incident);
-            console.log(incident.case_number);
             let json_data = JSON.stringify({ "case_number": incident.case_number });
-            console.log(json_data);
             $.ajax({
                 type: 'DELETE',
                 contentType: 'application/json',
@@ -321,7 +328,7 @@ export default {
                     });
                 },
                 error: (status, message) => {
-                    console.log({ status: status.status, message: status.statusText });
+                    alert("Unable to remove the incident from the database!");
                 }
             });
         },
