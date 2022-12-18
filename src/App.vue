@@ -72,13 +72,12 @@ export default {
             if (!el.value) return;
             if (el.value.split(',').length == 2) {
                 let location = el.value.split(',');
-                console.log(location[1]);
-                //This condition always is false at the moment
-                if((44.883658 <= parseInt(location[0]) <= 45.008206) && ((-93.217977 <= parseInt(location[1])<= -92.993787))){
-                    this.leaflet.map.flyTo(el.value.split(','), 18);
+                if((44.883658 <= parseFloat(location[0]) <= 45.008206) && ((-93.217977 <= parseFloat(location[1])) && (parseFloat(location[1]) <= -92.993787))){
+                    this.leaflet.map.flyTo(el.value.split(','), 14);
+                } else {
+                    alert("Please enter coordinates within the St. Paul city boundaries!");
                 }
             } else {
-                console.log("address entered")
                 let loc = el.value.split(" ");
                 loc[0].replace('X', '0');
                 loc.push("MN");
@@ -88,9 +87,8 @@ export default {
                         const parsed = JSON.parse(res);
                         if (parsed.length < 0) return;
                         const location = parsed[0];
-                        console.log(location);
                         if ((44.883658 <= location.lat <= 45.008206) && (-93.217977 <= location.lon) && (location.lon <= -92.993787)) {
-                            this.leaflet.map.flyTo([location.lat, location.lon], 18);
+                            this.leaflet.map.flyTo([location.lat, location.lon], 14);
                         } else {
                             alert("Please enter an address within the St. Paul city boundaries!");
                         }
@@ -110,6 +108,7 @@ export default {
             location = `${location.lat}, ${location.lng}`;
             el.value = location ?? el.value;
             el.dispatchEvent(new Event('input'));
+            this.getViewableNeighborhoods();
         },
 
         onMapClick(e) {
@@ -126,6 +125,7 @@ export default {
         },
 
         updateTable(filter) {
+            console.log(filter);
             var url = 'http://localhost:8080/incidents?';
 
             if (filter.incidents.length > 0) {
@@ -160,6 +160,30 @@ export default {
             }).catch((error) => {
                 console.log(error);
             });
+        },
+
+        getViewableNeighborhoods(){
+            var corners = this.leaflet.map.getBounds();
+            var ne = corners.getNorthEast();
+            var sw = corners.getSouthWest();
+            console.log(`NE: ${ne}, SW:${sw}`);
+            let inRange = []
+            for (var i =0;i<this.leaflet.neighborhood_markers.length;i++){
+                if ((parseFloat(sw.lat) <= parseFloat(this.leaflet.neighborhood_markers[i].location[0]) <= parseFloat(ne.lat)) && (parseFloat(sw.lng) <= this.leaflet.neighborhood_markers[i].location[1]) && (this.leaflet.neighborhood_markers[i].location[1] <= parseFloat(ne.lng))){
+                    inRange.push(this.leaflet.neighborhood_markers[i].marker);
+                }
+            }
+            console.log(inRange);
+            var greenIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+            });
+            var marker = L.marker([ne.lat,ne.lng],{icon:greenIcon}).addTo(this.leaflet.map)
+            var marker = L.marker([sw.lat,sw.lng],{icon:greenIcon}).addTo(this.leaflet.map)
         },
 
         getText(url) {
@@ -217,13 +241,43 @@ export default {
             minZoom: 11,
             maxZoom: 18
         }).addTo(this.leaflet.map);
+        this.getJSON('http://localhost:8080/neighborhoods').then((result) => {
+            this.neighborhoods = result;
+            /*
+                this.getJSON('http://localhost:8080/incidents?limit=1000').then((result) => {*/
+                    if (this.incidents.length==0){
+                        this.updateTable({
+                            incidents: [],
+                            neighborhoods: [],
+                            startTime: '',
+                            endTime: '',
+                            startDate: '',
+                            endDate: '',
+                            limit: 1000,
+                        });
+                    }
+                    console.log(this.incidents);
+                    for (var i = 0; i < this.leaflet.neighborhood_markers.length; i++) {
+                        var location = this.leaflet.neighborhood_markers[i].location;
+                        var name = this.leaflet.neighborhood_markers[i].marker;
+                        var marker = L.marker(location).addTo(this.leaflet.map).on('click', this.onMapClick);
+                            var incidentNumber = 0;
+                            for (var j=0;j<this.incidents.length;j++) {
+                                if (this.incidents[j].neighborhood_number == i+1) {
+                                    incidentNumber++;
+                                }
+                            }
+                            marker.bindPopup(`Incidents in the ${name} Neighborhood: ${incidentNumber}`);
+                    }
+                    /*
+                    }).catch((error) => {
+                        console.log(error);
+                    }); */
+            })
+        .catch((error) => {
+            console.log(error);
+        });
 
-        for (var i = 0; i < this.leaflet.neighborhood_markers.length; i++) {
-            var location = this.leaflet.neighborhood_markers[i].location;
-            var name = this.leaflet.neighborhood_markers[i].marker;
-            var marker = L.marker(location).addTo(this.leaflet.map).on('click', this.onMapClick);
-            marker.bindPopup(`Incidents in the ${name} Neighborhood: {Incident # here}`);
-        }
 
         this.leaflet.map.setMaxBounds([[44.883658, -93.217977], [45.008206, -92.993787]]);
         this.leaflet.map.on('click', this.onMapClick);
@@ -240,17 +294,6 @@ export default {
             console.log('Error:', error);
         });
 
-        this.getJSON('http://localhost:8080/neighborhoods').then((result) => {
-            this.neighborhood_dict = result;
-        }).catch((error) => {
-            console.log(error);
-        });
-
-        this.getJSON('http://localhost:8080/incidents?limit=1000').then((result) => {
-            this.incidents = result;
-        }).catch((error) => {
-            console.log(error);
-        });
     }
 }
 </script>
@@ -306,7 +349,7 @@ export default {
                         <td>{{ incident.time }}</td>
                         <td>{{ incident.incident }}</td>
                         <td>{{ incident.police_grid }}</td>
-                        <td>{{ neighborhood_dict.filter(n => n.ID == incident.neighborhood_number)[0].Name }}</td>
+                        <td>{{ neighborhoods.filter(n => n.ID == incident.neighborhood_number)[0].Name }}</td>
                         <td>{{ incident.block }}</td>
                     </tr>
                 </tbody>
