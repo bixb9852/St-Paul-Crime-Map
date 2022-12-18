@@ -12,6 +12,7 @@ export default {
                 startDate: '',
                 endDate: '',
                 limit: 1000,
+                removed: false
             },
             incident_names: {
                 'Murder': [100, 110, 120],
