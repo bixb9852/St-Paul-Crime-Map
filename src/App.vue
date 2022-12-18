@@ -20,6 +20,7 @@ export default {
             neighborhoods: [],
             incidents: [],
             filter: false,
+            layerGroup: null,
             leaflet: {
                 map: null,
                 center: {
@@ -51,7 +52,7 @@ export default {
                     { location: [44.937705, -93.136997], marker: 'Summit Hill' },
                     { location: [44.949203, -93.093739], marker: 'Downtown' }
                 ]
-            }
+            },
         };
     },
     methods: {
@@ -125,7 +126,6 @@ export default {
         },
 
         updateTable(filter) {
-            console.log(filter);
             var url = 'http://localhost:8080/incidents?';
 
             if (filter.incidents.length > 0) {
@@ -157,6 +157,7 @@ export default {
 
                 this.incidents = result;
                 this.filter = false;
+                this.placeMarkers(this.layerGroup);
             }).catch((error) => {
                 console.log(error);
             });
@@ -232,7 +233,59 @@ export default {
                     }
                 });
             });
-        }
+        },
+        placeMarkers(layerGroup){
+            this.getJSON('http://localhost:8080/neighborhoods').then((result) => {
+            this.neighborhoods = result;
+            if (this.incidents.length==0){
+                this.getJSON('http://localhost:8080/incidents?limit=1000').then((result) => {
+                        this.incidents = result;
+                        for (var i = 0; i < this.leaflet.neighborhood_markers.length; i++) {
+                        var location = this.leaflet.neighborhood_markers[i].location;
+                        var name = this.leaflet.neighborhood_markers[i].marker;
+                        var marker = L.marker(location, {title:name}).on('click', this.onMapClick);
+                        var incidentNumber = 0;
+                        for (var j=0;j<this.incidents.length;j++) {
+                            if (this.incidents[j].neighborhood_number == i+1) {
+                                incidentNumber++;
+                            }
+                        }
+                        marker.bindPopup(`Incidents in the ${name} Neighborhood: ${incidentNumber}`);
+                        layerGroup.addLayer(marker);
+                    }
+                    var overlay = {'markers': layerGroup};
+                    L.control.layers(null, overlay).addTo(this.leaflet.map);
+                })
+                .catch((error) => {
+                    console.log(error);
+                });  
+                 
+            } else {
+
+                for (var i = 0; i < this.leaflet.neighborhood_markers.length; i++) {
+                    //var location = this.leaflet.neighborhood_markers[i].location;
+                    var name = this.leaflet.neighborhood_markers[i].marker;
+                    //var marker = L.marker(location, {title:name}).on('click', this.onMapClick);
+                    var incidentNumber = 0;
+                    for (var j=0;j<this.incidents.length;j++) {
+                        if (this.incidents[j].neighborhood_number == i+1) {
+                            incidentNumber++;
+                        }
+                    }
+                    layerGroup.eachLayer(function (layer) {
+                        if(layer.options.title === name){
+                            layer.bindPopup(`Incidents in the ${name} Neighborhood: ${incidentNumber}`);
+                        }
+                    })
+                }
+                }
+            }).catch((error) => {
+                console.log(error);
+            }); 
+            }
+
+        
+
     },
     mounted() {
         this.leaflet.map = L.map('leafletmap').setView([this.leaflet.center.lat, this.leaflet.center.lng], this.leaflet.zoom);
@@ -241,44 +294,8 @@ export default {
             minZoom: 11,
             maxZoom: 18
         }).addTo(this.leaflet.map);
-        this.getJSON('http://localhost:8080/neighborhoods').then((result) => {
-            this.neighborhoods = result;
-            /*
-                this.getJSON('http://localhost:8080/incidents?limit=1000').then((result) => {*/
-                    if (this.incidents.length==0){
-                        this.updateTable({
-                            incidents: [],
-                            neighborhoods: [],
-                            startTime: '',
-                            endTime: '',
-                            startDate: '',
-                            endDate: '',
-                            limit: 1000,
-                        });
-                    }
-                    console.log(this.incidents);
-                    for (var i = 0; i < this.leaflet.neighborhood_markers.length; i++) {
-                        var location = this.leaflet.neighborhood_markers[i].location;
-                        var name = this.leaflet.neighborhood_markers[i].marker;
-                        var marker = L.marker(location).addTo(this.leaflet.map).on('click', this.onMapClick);
-                            var incidentNumber = 0;
-                            for (var j=0;j<this.incidents.length;j++) {
-                                if (this.incidents[j].neighborhood_number == i+1) {
-                                    incidentNumber++;
-                                }
-                            }
-                            marker.bindPopup(`Incidents in the ${name} Neighborhood: ${incidentNumber}`);
-                    }
-                    /*
-                    }).catch((error) => {
-                        console.log(error);
-                    }); */
-            })
-        .catch((error) => {
-            console.log(error);
-        });
-
-
+        this.layerGroup = L.layerGroup().addTo(this.leaflet.map);
+        this.placeMarkers(this.layerGroup);
         this.leaflet.map.setMaxBounds([[44.883658, -93.217977], [45.008206, -92.993787]]);
         this.leaflet.map.on('click', this.onMapClick);
         this.leaflet.map.on('moveend', this.onMapMove);
