@@ -49,9 +49,7 @@ export default {
                 }
             }
             if (submitForm == true){
-                console.log(this.data.incident);
                 let json_data = JSON.stringify({ "case_number": parseInt(this.data.case_number), "date": this.data.date, "time":this.data.time, "code": parseInt(this.data.code), "incident":this.data.incident,"police_grid":parseInt(this.data.police_grid), "neighborhood_number":parseInt(this.data.neighborhood_number), "block":this.data.block});
-                console.log(json_data);
                 $.ajax({
                     type: 'PUT',
                     contentType: 'application/json',
