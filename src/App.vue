@@ -179,20 +179,11 @@ export default {
             let inRange = []
             for (var i = 0; i < this.leaflet.neighborhood_markers.length; i++) {
                 if ((parseFloat(sw.lat) <= parseFloat(this.leaflet.neighborhood_markers[i].location[0]) <= parseFloat(ne.lat)) && (parseFloat(sw.lng) <= this.leaflet.neighborhood_markers[i].location[1]) && (this.leaflet.neighborhood_markers[i].location[1] <= parseFloat(ne.lng))) {
-                    inRange.push(i);
+                    inRange.push(i+1);
                 }
             }
             console.log(inRange);
-            this.updateTable({
-                incidents: [],
-                neighborhoods: inRange,
-                startTime: '',
-                endTime: '',
-                startDate: '',
-                endDate: '',
-                limit: 1000,
-                removed: false
-            })
+            return inRange;
             // var marker = L.marker([ne.lat,ne.lng],{icon:greenIcon}).addTo(this.leaflet.map)
             // var marker = L.marker([sw.lat,sw.lng],{icon:greenIcon}).addTo(this.leaflet.map)
         },
@@ -407,14 +398,6 @@ export default {
 <template>
     <div class="grid-container">
         <div class="grid-x grid-padding-x">
-            <label for="location">Enter a location here:</label>
-            <input class="cell small-4" id="location" v-model="location"
-                placeholder="(Lattitude, Longitude) or Address" />
-            <button id="updateLocation" class="cell small-4" type="submit" @click="goToLocation">Go</button>
-        </div>
-    </div>
-    <div class="grid-container">
-        <div class="grid-x grid-padding-x">
             <p :class="'cell small-4 ' + ((view === 'map') ? 'selected' : 'unselected')" @click="viewMap">Map</p>
             <p :class="'cell small-4 ' + ((view === 'new_incident') ? 'selected' : 'unselected')"
                 @click="viewNewIncident">New Incident</p>
@@ -422,6 +405,14 @@ export default {
         </div>
     </div>
     <div v-show="view === 'map'">
+        <div class="grid-container">
+        <div class="grid-x grid-padding-x">
+            <label for="location">Enter a location here:</label>
+            <input class="cell small-4" id="location" v-model="location"
+                placeholder="(Lattitude, Longitude) or Address" />
+            <button id="updateLocation" class="cell small-4" type="submit" @click="goToLocation">Go</button>
+        </div>
+    </div>
         <div class="grid-container">
             <div class="grid-x grid-padding-x">
                 <div id="leafletmap" class="cell auto"></div>
