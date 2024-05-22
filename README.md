@@ -26,4 +26,4 @@ Finding Number 4: Crimes in Downtown Neighborhood
 The most common crime in Downtown St. Paul seems to be theft, with the majority of property crimes in that area being crimes of theft.
 
 **Note**
-Project was completed as a group project, in conjunction with Ani Lamichhane and Seth Zerwas. Ani mainly focused on HTML and work with the Restful server, and Seth did a lot of work with the database. I mostly worked on CSS styling and the look of the site.
+Project was completed as a group project, in conjunction with Ani Lamichhane and Seth Zerwas. Ani did work on both the frontend and backend, Seth mainly focused on the backend, and I did most of the work on the frontend.
