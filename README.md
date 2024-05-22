@@ -24,5 +24,6 @@ There seems to be a common trend that in the north and north east sides of the c
 
 Finding Number 4: Crimes in Downtown Neighborhood
 The most common crime in Downtown St. Paul seems to be theft, with the majority of property crimes in that area being crimes of theft.
+
 **Note**
 Project was completed as a group project, in conjunction with Ani Lamichhane and Seth Zerwas. Ani mainly focused on HTML and work with the Restful server, and Seth did a lot of work with the database. I mostly worked on CSS styling and the look of the site.
